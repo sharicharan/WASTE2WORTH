@@ -22,7 +22,6 @@
             box-shadow: 0 6px 15px rgba(0,0,0,0.2);
         }
 
-        /* ===== STATS ===== */
         .stats {
             display: grid;
             grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
@@ -36,7 +35,6 @@
             padding: 28px;
             box-shadow: 0 12px 30px rgba(0,0,0,0.1);
             text-align: center;
-            animation: pop 0.6s ease;
             transition: transform .3s, box-shadow .3s;
         }
 
@@ -57,13 +55,11 @@
             font-size: 16px;
         }
 
-        /* ===== PROGRESS RING ===== */
         .ring {
             width: 120px;
             height: 120px;
             border-radius: 50%;
-            background:
-              conic-gradient(#2e7d32 {{ percent }}%, #e0e0e0 0);
+            background: conic-gradient(#2e7d32 {{ percent }}%, #e0e0e0 0);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -83,18 +79,12 @@
             color: #1b5e20;
         }
 
-        /* ===== MAP-LIKE PANEL ===== */
         .map-panel {
             margin: 0 35px 20px;
             background: linear-gradient(135deg,#a5d6a7,#e8f5e9);
             border-radius: 18px;
             padding: 25px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        }
-
-        .map-panel h3 {
-            margin-top: 0;
-            color: #1b5e20;
         }
 
         .bar {
@@ -109,10 +99,8 @@
             display: block;
             height: 100%;
             background: linear-gradient(90deg,#2e7d32,#66bb6a);
-            animation: loadBar 1.5s ease;
         }
 
-        /* ===== TABLE ===== */
         table {
             width: 95%;
             margin: 30px auto;
@@ -134,12 +122,6 @@
             border-bottom: 1px solid #eee;
             text-align: center;
             font-size: 14px;
-            vertical-align: top;
-            transition: background .2s;
-        }
-
-        tr:hover td {
-            background: #f1f8e9;
         }
 
         img {
@@ -160,17 +142,6 @@
         .pending { background: #f9a825; }
         .done { background: #2e7d32; }
 
-        .feedback-box {
-            text-align: left;
-            font-size: 13px;
-            color: #333;
-        }
-
-        .stars {
-            color: #f9a825;
-            font-weight: bold;
-        }
-
         footer {
             text-align: center;
             padding: 18px;
@@ -178,50 +149,104 @@
             font-size: 14px;
         }
 
-        @keyframes pop {
-            from {transform:scale(0.9);opacity:0;}
-            to {transform:scale(1);opacity:1;}
+        /* ===== LOGIN OVERLAY ===== */
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.65);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
         }
 
-        @keyframes loadBar {
-            from {width:0;}
-            to {width:100%;}
+        .login-box {
+            background: white;
+            padding: 35px;
+            border-radius: 18px;
+            width: 340px;
+            text-align: center;
+            box-shadow: 0 20px 45px rgba(0,0,0,0.25);
         }
+
+        .login-box h3 {
+            color: #2e7d32;
+            margin-bottom: 20px;
+        }
+
+        .login-box input {
+            width: 100%;
+            padding: 12px;
+            margin-top: 12px;
+            border-radius: 10px;
+            border: 1px solid #ccc;
+        }
+
+        .login-box button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 20px;
+            background: linear-gradient(90deg,#2e7d32,#43a047);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .error {
+            color: #c62828;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        /* Blur background when login is active */
+body.locked {
+    overflow: hidden;
+}
+
+body.locked > *:not(.overlay) {
+    filter: blur(6px);
+    pointer-events: none;
+    user-select: none;
+    transition: filter 0.3s ease;
+}
+
+/* Slight animation for login */
+.login-box {
+    animation: zoomIn 0.4s ease;
+}
+
+@keyframes zoomIn {
+    from { transform: scale(0.85); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
     </style>
 </head>
+<body class="locked">
 
-<body>
+
+<!-- LOGIN -->
+<div class="overlay" id="loginBox">
+    <div class="login-box">
+        <h3>🔐 Admin Login</h3>
+        <input id="username" placeholder="Username">
+        <input id="password" type="password" placeholder="Password">
+        <button onclick="login()">Login</button>
+        <div class="error" id="err"></div>
+    </div>
+</div>
 
 <header>📊 CleanNow+ — Municipal Admin Control Panel</header>
 
 <div class="stats">
-
-    <div class="card">
-        <h2>{{ total }}</h2>
-        <p>Total Reports</p>
-    </div>
-
-    <div class="card">
-        <h2>{{ pending }}</h2>
-        <p>Pending</p>
-    </div>
-
-    <div class="card">
-        <h2>{{ completed }}</h2>
-        <p>Completed</p>
-    </div>
-
-    <div class="card">
-        <div class="ring">
-            <span>{{ percent }}%</span>
-        </div>
-        <p>Area Cleaned</p>
-    </div>
-
+    <div class="card"><h2>{{ total }}</h2><p>Total Reports</p></div>
+    <div class="card"><h2>{{ pending }}</h2><p>Pending</p></div>
+    <div class="card"><h2>{{ completed }}</h2><p>Completed</p></div>
+    <div class="card"><div class="ring"><span>{{ percent }}%</span></div><p>Area Cleaned</p></div>
 </div>
 
 <div class="map-panel">
-    <h3>📍 Community Cleanliness Overview</h3>
     <p>Pending Issues</p>
     <div class="bar"><span style="width: {{ (pending / total * 100) if total else 0 }}%"></span></div>
     <p>Resolved Issues</p>
@@ -229,24 +254,32 @@
 </div>
 
 <table>
-    <tr>
-        <th>ID</th>
-        <th>Waste</th>
-        <th>Before</th>
-        <th>After</th>
-        <th>Status</th>
-        <th>Location</th>
-        <th>Date</th>
-        <th>Feedback</th>
-    </tr>
+<tr>
+    <th>ID</th>
+    <th>Waste</th>
+    <th>Before</th>
+    <th>After</th>
+    <th>Status</th>
+    <th>Feedback</th>
+</tr>
 
 {% for r in reports %}
 <tr>
     <td>{{ r.id }}</td>
+
     <td>{{ r.waste_type }}</td>
 
-    <td>{% if r.before_image %}<img src="{{ url_for('static', filename='uploads/' + r.before_image) }}">{% endif %}</td>
-    <td>{% if r.after_image %}<img src="{{ url_for('static', filename='uploads/' + r.after_image) }}">{% endif %}</td>
+    <td>
+        {% if r.before_image %}
+            <img src="{{ url_for('static', filename='uploads/' + r.before_image) }}">
+        {% endif %}
+    </td>
+
+    <td>
+        {% if r.after_image %}
+            <img src="{{ url_for('static', filename='uploads/' + r.after_image) }}">
+        {% endif %}
+    </td>
 
     <td>
         {% if r.status == 'Pending' %}
@@ -256,26 +289,37 @@
         {% endif %}
     </td>
 
-    <td>{{ r.latitude }}, {{ r.longitude }}</td>
-    <td>{{ r.created_at.strftime('%d %b %Y') }}</td>
-
-    <td>
+    <td style="text-align:left">
         {% if r.feedback %}
-            <div class="feedback-box">
-                <div class="stars">⭐ {{ r.rating }}/5</div>
-                {{ r.feedback }}
+            <div style="font-size:13px">
+                <div style="color:#f9a825;font-weight:bold">⭐ Feedback</div>
+                <div>{{ r.feedback }}</div>
             </div>
         {% else %}
-            <span style="color:#999;">No feedback</span>
+            <span style="color:#999;font-size:13px">No feedback yet</span>
         {% endif %}
     </td>
 </tr>
 {% endfor %}
 </table>
 
-<footer>
-    🇮🇳 “Clean India, Green India” — Smart Civic Reporting System
-</footer>
+
+<footer>🇮🇳 Clean India, Green India</footer>
+
+<script>
+function login() {
+    const u = document.getElementById("username").value;
+    const p = document.getElementById("password").value;
+
+    if (u === "admin" && p === "admin") {
+        document.getElementById("loginBox").style.display = "none";
+        document.body.classList.remove("locked"); // remove blur
+    } else {
+        document.getElementById("err").innerText = "Invalid credentials";
+    }
+}
+</script>
+
 
 </body>
 </html>
