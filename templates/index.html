@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CleanNow+ | Citizen Portal</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', sans-serif;
+            background:
+                radial-gradient(circle at top left, #c8e6c9, transparent 45%),
+                radial-gradient(circle at bottom right, #a5d6a7, transparent 45%),
+                linear-gradient(135deg,#e8f5e9,#ffffff);
+            min-height: 100vh;
+        }
+
+        header {
+            background: linear-gradient(90deg,#1b5e20,#43a047);
+            color: white;
+            padding: 26px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 30px;
+            letter-spacing: 1px;
+        }
+
+        header p {
+            margin: 6px 0 0;
+            font-size: 15px;
+            opacity: 0.95;
+        }
+
+        .container {
+            display: flex;
+            justify-content: center;
+            padding: 50px 20px;
+        }
+
+        .card {
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(8px);
+            width: 480px;
+            padding: 34px;
+            border-radius: 22px;
+            box-shadow: 0 20px 45px rgba(0,0,0,0.15);
+            animation: fadeIn 0.9s ease;
+            transition: transform .3s, box-shadow .3s;
+        }
+
+        .card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 28px 60px rgba(0,0,0,0.22);
+        }
+
+        h2 {
+            text-align: center;
+            color: #2e7d32;
+            margin-bottom: 18px;
+        }
+
+        label {
+            font-weight: 600;
+            color: #444;
+            display: block;
+            margin-top: 16px;
+        }
+
+        select, input, button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            font-size: 15px;
+            border-radius: 10px;
+        }
+
+        select, input[type=file] {
+            border: 1px solid #ccc;
+            background: #fafafa;
+        }
+
+        button {
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            letter-spacing: .5px;
+            transition: transform .2s, box-shadow .2s;
+        }
+
+        .primary {
+            background: linear-gradient(90deg,#2e7d32,#43a047);
+            color: white;
+            margin-top: 22px;
+        }
+
+        .primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 18px rgba(46,125,50,0.4);
+        }
+
+        .alt-btn {
+            background: linear-gradient(90deg,#1565c0,#1e88e5);
+            color: white;
+            margin-top: 12px;
+        }
+
+        .alt-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 18px rgba(21,101,192,0.4);
+        }
+
+        .msg {
+            text-align: center;
+            margin-top: 18px;
+            font-weight: bold;
+            font-size: 15px;
+        }
+
+        .success { color: #2e7d32; }
+        .error { color: #c62828; }
+
+        footer {
+            text-align: center;
+            padding: 18px;
+            color: #555;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+
+        @keyframes fadeIn {
+            from {opacity:0; transform:translateY(25px);}
+            to {opacity:1; transform:translateY(0);}
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>♻️ CleanNow+</h1>
+    <p>“Be the change. Report waste. Make India clean 🇮🇳”</p>
+</header>
+
+<div class="container">
+    <div class="card">
+
+        <h2>📸 Report Waste Issue</h2>
+
+        <label>Waste Type</label>
+        <select id="wasteType">
+            <option>Garbage</option>
+            <option>Plastic</option>
+            <option>Organic</option>
+            <option>E-Waste</option>
+            <option>Construction Waste</option>
+        </select>
+
+        <label>Capture / Upload Image</label>
+        <input type="file" id="imageInput" accept="image/*" capture="environment">
+
+        <button class="primary" onclick="submitReport()">🚀 Submit Report</button>
+
+        <button class="alt-btn" onclick="window.location.href='/status'">
+            🔍 Track My Reports
+        </button>
+
+        <div class="msg" id="msg"></div>
+
+    </div>
+</div>
+
+<footer>
+    Smart Civic Reporting System • Hackathon Ready 🚀
+</footer>
+
+<script>
+function submitReport() {
+    const image = document.getElementById("imageInput").files[0];
+    const waste = document.getElementById("wasteType").value;
+    const msg = document.getElementById("msg");
+
+    if (!image) {
+        msg.innerHTML = "<span class='error'>📷 Please capture or upload an image</span>";
+        return;
+    }
+
+    if (!navigator.geolocation) {
+        msg.innerHTML = "<span class='error'>❌ GPS not supported</span>";
+        return;
+    }
+
+    msg.innerHTML = "📍 Fetching location…";
+
+    navigator.geolocation.getCurrentPosition(pos => {
+
+        const fd = new FormData();
+        fd.append("waste_type", waste);
+        fd.append("latitude", pos.coords.latitude);
+        fd.append("longitude", pos.coords.longitude);
+        fd.append("before_image", image);
+
+        fetch("/submit", {
+            method: "POST",
+            body: fd
+        })
+        .then(res => {
+            if (res.redirected) {
+                window.location.href = res.url;
+            } else {
+                msg.innerHTML = "<span class='success'>✅ Report submitted successfully</span>";
+            }
+        })
+        .catch(() => {
+            msg.innerHTML = "<span class='error'>❌ Network error</span>";
+        });
+
+    }, () => {
+        msg.innerHTML = "<span class='error'>📍 Location permission denied</span>";
+    });
+}
+</script>
+
+</body>
+</html>
