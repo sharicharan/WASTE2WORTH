@@ -17,13 +17,22 @@ db = SQLAlchemy(app)
 # ================= MODEL =================
 class Report(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+
+    # 👤 USER IDENTIFIER (for per-user tracking)
+    user_id = db.Column(db.String(100))
+
     waste_type = db.Column(db.String(100))
     latitude = db.Column(db.String(50))
     longitude = db.Column(db.String(50))
+
     before_image = db.Column(db.String(200))
     after_image = db.Column(db.String(200))
+
     status = db.Column(db.String(50), default="Pending")
-    feedback = db.Column(db.Text)          # ⭐ NEW FEATURE
+
+    # ⭐ FEEDBACK FEATURE
+    feedback = db.Column(db.Text)
+
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 # ================= CREATE DB =================
@@ -42,6 +51,9 @@ def submit():
     latitude = request.form["latitude"]
     longitude = request.form["longitude"]
 
+    # 👤 USER ID FROM FRONTEND (localStorage)
+    user_id = request.form.get("user_id")
+
     image_file = None
 
     # CAMERA IMAGE (base64)
@@ -58,40 +70,59 @@ def submit():
     elif "before_image" in request.files:
         file = request.files["before_image"]
         if file and file.filename != "":
-            filename = secure_filename(file.filename)
+            filename = secure_filename(
+                f"{int(datetime.utcnow().timestamp())}_{file.filename}"
+            )
             file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
             image_file = filename
 
     report = Report(
+        user_id=user_id,
         waste_type=waste_type,
         latitude=latitude,
         longitude=longitude,
-        before_image=image_file
+        before_image=image_file,
+        status="Pending"
     )
 
     db.session.add(report)
     db.session.commit()
 
-    return redirect(url_for("status"))
+    # 🔁 Redirect with user id so only this user's reports are shown
+    return redirect(url_for("status", user=user_id))
 
-# ================= STATUS PAGE =================
+# ================= STATUS PAGE (USER-SPECIFIC) =================
 @app.route("/status")
 def status():
-    reports = Report.query.order_by(Report.created_at.desc()).all()
+    user_id = request.args.get("user")
+
+    if user_id:
+        reports = (
+            Report.query
+            .filter_by(user_id=user_id)
+            .order_by(Report.created_at.desc())
+            .all()
+        )
+    else:
+        reports = []
+
     return render_template("status.html", reports=reports)
 
-# ================= FEEDBACK (NEW) =================
+# ================= FEEDBACK (ONLY AFTER COMPLETION) =================
 @app.route("/feedback/<int:report_id>", methods=["POST"])
 def feedback(report_id):
     report = db.session.get(Report, report_id)
-    report.feedback = request.form["feedback"]
-    db.session.commit()
-    return redirect(url_for("status"))
+
+    if report and report.status == "Completed":
+        report.feedback = request.form["feedback"]
+        db.session.commit()
+
+    return redirect(url_for("status", user=report.user_id))
 
 # ================= WORKER PANEL =================
 @app.route("/worker", methods=["GET"])
 def worker():
-    reports = Report.query.all()
+    reports = Report.query.order_by(Report.created_at.desc()).all()
     return render_template("worker.html", reports=reports)
 
 # ================= WORKER COMPLETE =================
@@ -101,7 +132,9 @@ def worker_complete(report_id):
 
     file = request.files.get("after_image")
     if file and file.filename != "":
-        filename = secure_filename(file.filename)
+        filename = secure_filename(
+            f"after_{report_id}_{file.filename}"
+        )
         file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
         report.after_image = filename
         report.status = "Completed"
@@ -131,4 +164,3 @@ def admin():
 # ================= RUN =================
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=10000)
-

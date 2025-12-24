@@ -163,7 +163,7 @@
 
         <button class="primary" onclick="submitReport()">🚀 Submit Report</button>
 
-        <button class="alt-btn" onclick="window.location.href='/status'">
+        <button class="alt-btn" onclick="goToStatus()">
             🔍 Track My Reports
         </button>
 
@@ -177,10 +177,26 @@
 </footer>
 
 <script>
+/* ========= USER IDENTIFIER (ONE-TIME) ========= */
+if (!localStorage.getItem("cleannow_user")) {
+    localStorage.setItem(
+        "cleannow_user",
+        "user_" + Math.random().toString(36).substr(2, 9)
+    );
+}
+
+/* ========= GO TO STATUS (ONLY THIS USER) ========= */
+function goToStatus() {
+    const uid = localStorage.getItem("cleannow_user");
+    window.location.href = "/status?user=" + uid;
+}
+
+/* ========= SUBMIT REPORT ========= */
 function submitReport() {
     const image = document.getElementById("imageInput").files[0];
     const waste = document.getElementById("wasteType").value;
     const msg = document.getElementById("msg");
+    const userId = localStorage.getItem("cleannow_user");
 
     if (!image) {
         msg.innerHTML = "<span class='error'>📷 Please capture or upload an image</span>";
@@ -197,6 +213,7 @@ function submitReport() {
     navigator.geolocation.getCurrentPosition(pos => {
 
         const fd = new FormData();
+        fd.append("user_id", userId);          // 👤 IMPORTANT
         fd.append("waste_type", waste);
         fd.append("latitude", pos.coords.latitude);
         fd.append("longitude", pos.coords.longitude);
@@ -210,7 +227,7 @@ function submitReport() {
             if (res.redirected) {
                 window.location.href = res.url;
             } else {
-                msg.innerHTML = "<span class='success'>✅ Report submitted successfully</span>";
+                msg.innerHTML = "<span class='success'>✅ Report submitted</span>";
             }
         })
         .catch(() => {
